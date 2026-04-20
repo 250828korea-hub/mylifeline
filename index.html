@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧步态分析系统 v3.0</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        body {
+            background: #0d1117;
+            color: #e6edf3;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #161b22;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.4);
+        }
+        h1 {
+            color: #58a6ff;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        .desc {
+            text-align: center;
+            color: #8b949e;
+            margin-bottom: 30px;
+        }
+        .func-list {
+            background: #21262d;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+        .func-list h3 {
+            color: #3fb950;
+            margin-bottom: 12px;
+        }
+        .func-list ul {
+            list-style: none;
+        }
+        .func-list li {
+            padding: 6px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+        .func-list li::before {
+            content: "•";
+            color: #58a6ff;
+            position: absolute;
+            left: 0;
+        }
+        .note {
+            background: #30363d;
+            padding: 15px;
+            border-radius: 6px;
+            color: #c9d1d9;
+            font-size: 14px;
+        }
+        .btn {
+            display: inline-block;
+            background: #238636;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🦿 智慧步态分析系统 v3.0</h1>
+        <p class="desc">基于 MediaPipe 姿态识别 + AI 分类的步态异常检测与跌倒风险预警</p>
+
+        <div class="func-list">
+            <h3>核心功能</h3>
+            <ul>
+                <li>精准步态信号生成与分析（高斯脉冲生物力学模型）</li>
+                <li>实时/视频 MediaPipe 骨骼追踪（33关键点）</li>
+                <li>15种步态异常实时识别</li>
+                <li>跌倒风险实时预警</li>
+                <li>伯格平衡量表（BBS）交互评估</li>
+                <li>GradientBoosting AI 步态分类（4类型）</li>
+                <li>综合可视化分析报告 + 文字诊断报告</li>
+            </ul>
+        </div>
+
+        <div class="note">
+            <strong>运行说明：</strong><br>
+            本系统为 Python + Colab 版本，需在 Python 环境中运行。<br>
+            网页版仅作展示，完整分析功能请运行源码。
+        </div>
+    </div>
+</body>
+</html>
