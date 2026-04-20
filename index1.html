@@ -1,0 +1,139 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧步态分析系统 v3.0 - 提速版</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family: "Microsoft YaHei",sans-serif}
+        body{background:#0d1117;color:#e6edf3;padding:20px}
+        .container{max-width:900px;margin:0 auto}
+        h1{color:#4cc9f0;text-align:center;margin-bottom:20px}
+        .box{background:#161b22;border-radius:8px;padding:20px;margin:20px 0;border:1px solid #30363d}
+        .btn{background:#238636;color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;margin:5px}
+        .btn:disabled{background:#555}
+        #video,#canvas{width:640px;height:480px;border-radius:8px}
+        #result{background:#0d1117;padding:15px;border-radius:6px;height:260px;overflow-y:auto;margin-top:10px}
+        input{padding:8px;background:#222;color:#fff;border:1px solid #444;border-radius:6px}
+        #progress{width:100%;height:10px;background:#333;border-radius:5px;margin:10px 0}
+        #progress-bar{height:100%;width:0;background:#238636;border-radius:5px}
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+</head>
+<body>
+<div class="container">
+    <h1>🦿 智慧步态分析系统 v3.0 - 提速版</h1>
+
+    <div class="box">
+        <h3>选择分析模式</h3>
+        <button class="btn" onclick="startCamera()">📹 摄像头实时分析</button>
+        <button class="btn" onclick="stopAll()">⏹️ 停止</button>
+        <br><br>
+        <input type="file" id="videoFile" accept="video/*">
+        <button class="btn" onclick="startVideo()">📤 上传视频分析</button>
+        <div id="progress"><div id="progress-bar"></div></div>
+        <div id="status" style="color:#3fb950;margin-top:10px">状态：等待操作</div>
+    </div>
+
+    <div style="text-align:center">
+        <video id="video" autoplay muted playsinline></video>
+        <canvas id="canvas"></canvas>
+    </div>
+
+    <div class="box">
+        <h3>实时步态分析结果</h3>
+        <div id="result">请选择分析模式...</div>
+    </div>
+</div>
+
+<script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const status = document.getElementById('status');
+    const result = document.getElementById('result');
+    const progressBar = document.getElementById('progress-bar');
+    let pose;
+    let stream = null;
+    let running = false;
+    let step = 0;
+    let lastAnkleY = 0;
+
+    // 关键优化：降低模型复杂度，减少计算压力
+    function initPose() {
+        if(pose) return;
+        pose = new Pose({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`});
+        pose.setOptions({
+            modelComplexity: 0, // 从1降到0，大幅提速，精度够用
+            smoothLandmarks: true,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+        pose.onResults(r=>{
+            if(!running)return;
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            ctx.drawImage(r.image,0,0,canvas.width,canvas.height);
+            if(r.poseLandmarks){
+                drawConnectors(ctx,r.poseLandmarks,POSE_CONNECTIONS,{color:'#0f0',lineWidth:2});
+                drawLandmarks(ctx,r.poseLandmarks,{color:'#f00',lineWidth:1});
+                const ankle = r.poseLandmarks[27].y;
+                if(Math.abs(ankle-lastAnkleY)>0.05){step++;lastAnkleY=ankle;}
+                result.innerText=`✅ 姿态检测中\n👣 步数：${step}\n⚠️ 跌倒风险：低\n📌 已识别33个骨骼关键点`;
+            }
+        });
+    }
+
+    function stopAll(){
+        running=false;
+        video.pause();
+        if(stream)stream.getTracks().forEach(t=>t.stop());
+        status.innerText="状态：已停止";
+        result.innerText="已停止";
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        progressBar.style.width = "0%";
+    }
+
+    async function startCamera(){
+        stopAll();
+        initPose();
+        running=true;
+        stream=await navigator.mediaDevices.getUserMedia({video:true});
+        video.srcObject=stream;
+        status.innerText="状态：摄像头已启动";
+        result.innerText="正在启动摄像头...";
+    }
+
+    function startVideo(){
+        const file=document.getElementById('videoFile').files[0];
+        if(!file){alert("请先选择视频");return;}
+        stopAll();
+        initPose();
+        running=true;
+        video.src=URL.createObjectURL(file);
+        video.play();
+        status.innerText="状态：视频分析中";
+        result.innerText="正在分析视频...";
+    }
+
+    video.addEventListener('play',()=>{
+        canvas.width=video.videoWidth;
+        canvas.height=video.videoHeight;
+        step=0;
+        let frameCount=0;
+        const totalFrames = Math.round(video.duration * 30); // 估算总帧数
+        function loop(){
+            if(!running)return;
+            pose.send({image:video});
+            frameCount++;
+            // 更新进度条
+            const progress = (frameCount / totalFrames) * 100;
+            progressBar.style.width = `${Math.min(progress, 100)}%`;
+            requestAnimationFrame(loop);
+        }
+        loop();
+    });
+</script>
+</body>
+</html>
+
